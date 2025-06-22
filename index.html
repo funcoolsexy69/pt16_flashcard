@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>영어 단어 플래시카드</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .card-container {
+            perspective: 1000px;
+            margin: 20px;
+        }
+        .card {
+            width: 300px;
+            height: 200px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+            cursor: pointer;
+        }
+        .card.flipped {
+            transform: rotateY(180deg);
+        }
+        .card-front, .card-back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            border: 2px solid #333;
+            border-radius: 10px;
+            background-color: #fff;
+        }
+        .card-back {
+            transform: rotateY(180deg);
+        }
+        .controls {
+            margin: 10px;
+            text-align: center;
+        }
+        .form-container {
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        input {
+            padding: 8px;
+            margin: 5px;
+            font-size: 16px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .word-list {
+            margin: 20px;
+            max-width: 300px;
+        }
+        .word-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px;
+            border-bottom: 1px solid #ddd;
+        }
+        .word-item button {
+            background-color: #dc3545;
+            padding: 5px 10px;
+            font-size: 14px;
+        }
+        .word-item button.edit {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    <h2>영어 단어 플래시카드</h2>
+    <div class="card-container">
+        <div class="card" id="card">
+            <div class="card-front" id="word">단어</div>
+            <div class="card-back" id="meaning">뜻</div>
+        </div>
+    </div>
+    <div class="controls">
+        <button onclick="nextCard()">다음 카드</button>
+        <button onclick="prevCard()">이전 카드</button>
+    </div>
+    <div class="form-container">
+        <input type="text" id="wordInput" placeholder="영어 단어">
+        <input type="text" id="meaningInput" placeholder="뜻">
+        <button onclick="addOrUpdateWord()">추가/수정</button>
+    </div>
+    <div class="word-list" id="wordList"></div>
+
+    <script>
+        let words = JSON.parse(localStorage.getItem('flashcards')) || [
+            { word: "Apple", meaning: "사과" },
+            { word: "Book", meaning: "책" },
+            { word: "Cat", meaning: "고양이" }
+        ];
+        let currentIndex = 0;
+        let editIndex = -1;
+
+        const card = document.getElementById('card');
+        const wordElement = document.getElementById('word');
+        const meaningElement = document.getElementById('meaning');
+        const wordInput = document.getElementById('wordInput');
+        const meaningInput = document.getElementById('meaningInput');
+        const wordList = document.getElementById('wordList');
+
+        function saveWords() {
+            localStorage.setItem('flashcards', JSON.stringify(words));
+        }
+
+        function showCard() {
+            if (words.length === 0) {
+                wordElement.textContent = "단어 없음";
+                meaningElement.textContent = "단어를 추가하세요";
+                card.classList.remove('flipped');
+                return;
+            }
+            card.classList.remove('flipped');
+            wordElement.textContent = words[currentIndex].word;
+            meaningElement.textContent = words[currentIndex].meaning;
+        }
+
+        function updateWordList() {
+            wordList.innerHTML = '';
+            words.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'word-item';
+                div.innerHTML = `
+                    <span>${item.word} - ${item.meaning}</span>
+                    <div>
+                        <button class="edit" onclick="editWord(${index})">수정</button>
+                        <button onclick="deleteWord(${index})">삭제</button>
+                    </div>
+                `;
+                wordList.appendChild(div);
+            });
+        }
+
+        card.addEventListener('click', () => {
+            if (words.length > 0) {
+                card.classList.toggle('flipped');
+            }
+        });
+
+        function nextCard() {
+            if (words.length > 0) {
+                currentIndex = (currentIndex + 1) % words.length;
+                showCard();
+            }
+        }
+
+        function prevCard() {
+            if (words.length > 0) {
+                currentIndex = (currentIndex - 1 + words.length) % words.length;
+                showCard();
+            }
+        }
+
+        function addOrUpdateWord() {
+            const word = wordInput.value.trim();
+            const meaning = meaningInput.value.trim();
+            if (word && meaning) {
+                if (editIndex === -1) {
+                    words.push({ word, meaning });
+                } else {
+                    words[editIndex] = { word, meaning };
+                    editIndex = -1;
+                }
+                saveWords();
+                wordInput.value = '';
+                meaningInput.value = '';
+                currentIndex = words.length - 1;
+                showCard();
+                updateWordList();
+            } else {
+                alert('단어와 뜻을 모두 입력하세요.');
+            }
+        }
+
+        function editWord(index) {
+            wordInput.value = words[index].word;
+            meaningInput.value = words[index].meaning;
+            editIndex = index;
+            wordInput.focus();
+        }
+
+        function deleteWord(index) {
+            if (confirm('이 단어를 삭제하시겠습니까?')) {
+                words.splice(index, 1);
+                saveWords();
+                if (currentIndex >= words.length) {
+                    currentIndex = words.length - 1;
+                }
+                if (currentIndex < 0) {
+                    currentIndex = 0;
+                }
+                showCard();
+                updateWordList();
+            }
+        }
+
+        // 초기화
+        showCard();
+        updateWordList();
+    </script>
+</body>
+</html>
