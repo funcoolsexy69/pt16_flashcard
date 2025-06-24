@@ -85,6 +85,7 @@
             justify-content: space-between;
             padding: 5px;
             border-bottom: 1px solid #ddd;
+            align-items: center;
         }
         .word-item button {
             background-color: #dc3545;
@@ -93,6 +94,20 @@
         }
         .word-item button.edit {
             background-color: #28a745;
+        }
+        .word-item button.up, .word-item button.down {
+            background-color: #6c757d;
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+        .word-item button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        .word-item .number {
+            min-width: 30px;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -105,8 +120,8 @@
         </div>
     </div>
     <div class="controls">
-        <button onclick="nextCard()">다음 카드</button>
         <button onclick="prevCard()">이전 카드</button>
+        <button onclick="nextCard()">다음 카드</button>
     </div>
     <div class="form-container">
         <input type="text" id="wordInput" placeholder="영어 단어">
@@ -153,14 +168,45 @@
                 const div = document.createElement('div');
                 div.className = 'word-item';
                 div.innerHTML = `
+                    <span class="number">${index + 1}.</span>
                     <span>${item.word} - ${item.meaning}</span>
                     <div>
+                        <button class="up" onclick="moveWordUp(${index})" ${index === 0 ? 'disabled' : ''}>↑</button>
+                        <button class="down" onclick="moveWordDown(${index})" ${index === words.length - 1 ? 'disabled' : ''}>↓</button>
                         <button class="edit" onclick="editWord(${index})">수정</button>
                         <button onclick="deleteWord(${index})">삭제</button>
                     </div>
                 `;
                 wordList.appendChild(div);
             });
+        }
+
+        function moveWordUp(index) {
+            if (index > 0) {
+                [words[index], words[index - 1]] = [words[index - 1], words[index]];
+                if (currentIndex === index) {
+                    currentIndex--;
+                } else if (currentIndex === index - 1) {
+                    currentIndex++;
+                }
+                saveWords();
+                showCard();
+                updateWordList();
+            }
+        }
+
+        function moveWordDown(index) {
+            if (index < words.length - 1) {
+                [words[index], words[index + 1]] = [words[index + 1], words[index]];
+                if (currentIndex === index) {
+                    currentIndex++;
+                } else if (currentIndex === index + 1) {
+                    currentIndex--;
+                }
+                saveWords();
+                showCard();
+                updateWordList();
+            }
         }
 
         card.addEventListener('click', () => {
