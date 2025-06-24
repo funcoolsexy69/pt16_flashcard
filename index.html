@@ -13,7 +13,7 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
-            overflow-x: hidden; /* Prevent horizontal scrolling */
+            overflow-x: hidden;
         }
         .card-container {
             perspective: 1000px;
@@ -80,12 +80,9 @@
         .word-list-container {
             margin: 20px;
             width: 300px;
-            /* Removed max-height and overflow-y to allow natural page scroll */
-            /* min-height: 100px; still optional for empty state */
         }
         .word-list {
             width: 100%;
-            /* Removed min-height to let content determine height */
         }
         .word-item {
             display: flex;
@@ -98,7 +95,7 @@
             border-radius: 5px;
             position: relative;
             z-index: 1;
-            user-select: none; /* Prevent text selection during drag */
+            user-select: none;
         }
         .word-item.dragging, .word-item.touch-dragging {
             opacity: 0.5;
@@ -215,8 +212,11 @@
         let touchOffsetY = 0;
         let touchStartY = 0;
         let isDragging = false;
-        const dragThreshold = 10;
+        const dragThreshold = 10; // Pixels to move before considering movement
+        const holdThreshold = 300; // Milliseconds to hold before initiating drag
+        let touchStartTime = 0;
 
+        // Mouse Drag Handlers
         function handleDragStart(e) {
             dragStartIndex = +e.target.getAttribute('data-index');
             e.target.classList.add('dragging');
@@ -249,14 +249,16 @@
             document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
         }
 
+        // Touch Handlers
         function handleTouchStart(e) {
-            if (e.touches.length > 1) return;
+            if (e.touches.length > 1) return; // Ignore multi-touch
             touchElement = e.target.closest('.word-item');
             touchStartIndex = +touchElement.getAttribute('data-index');
             const touch = e.touches[0];
             touchStartY = touch.clientY;
             const rect = touchElement.getBoundingClientRect();
             touchOffsetY = touch.clientY - rect.top;
+            touchStartTime = Date.now(); // Record start time
             isDragging = false;
         }
 
@@ -264,9 +266,11 @@
             if (!touchElement) return;
             const touch = e.touches[0];
             const deltaY = Math.abs(touch.clientY - touchStartY);
+            const timeElapsed = Date.now() - touchStartTime;
 
-            if (!isDragging && deltaY > dragThreshold) {
-                e.preventDefault();
+            // Only start dragging if hold threshold and movement threshold are met
+            if (!isDragging && timeElapsed >= holdThreshold && deltaY > dragThreshold) {
+                e.preventDefault(); // Prevent scrolling only when dragging starts
                 isDragging = true;
                 touchElement.classList.add('touch-dragging');
                 touchElement.style.position = 'absolute';
@@ -277,6 +281,8 @@
             if (isDragging) {
                 e.preventDefault();
                 touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
+
+                // Find the element under the touch point
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
                 document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
@@ -295,6 +301,8 @@
                 touchElement.style.position = '';
                 touchElement.style.width = '';
                 touchElement.style.top = '';
+
+                // Find the drop target
                 const touch = e.changedTouches[0];
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
@@ -310,6 +318,7 @@
             touchElement = null;
             touchStartIndex = null;
             touchOffsetY = 0;
+            touchStartTime = 0;
             isDragging = false;
         }
 
