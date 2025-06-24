@@ -13,7 +13,6 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
-            touch-action: none; /* Prevent default touch behaviors like scrolling */
         }
         .card-container {
             perspective: 1000px;
@@ -77,9 +76,15 @@
         button:hover {
             background-color: #0056b3;
         }
-        .word-list {
+        .word-list-container {
             margin: 20px;
             max-width: 300px;
+            max-height: 300px; /* Adjust as needed for your design */
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
+        .word-list {
+            width: 100%;
         }
         .word-item {
             display: flex;
@@ -133,7 +138,9 @@
         <input type="text" id="meaningInput" placeholder="뜻">
         <button onclick="addOrUpdateWord()">추가/수정</button>
     </div>
-    <div class="word-list" id="wordList"></div>
+    <div class="word-list-container">
+        <div class="word-list" id="wordList"></div>
+    </div>
 
     <script>
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
@@ -201,6 +208,9 @@
         let touchStartIndex = null;
         let touchElement = null;
         let touchOffsetY = 0;
+        let touchStartY = 0;
+        let isDragging = false;
+        const dragThreshold = 10; // Pixels to move before considering it a drag
 
         // Mouse Drag Handlers
         function handleDragStart(e) {
@@ -237,49 +247,63 @@
 
         // Touch Handlers
         function handleTouchStart(e) {
+            if (e.touches.length > 1) return; // Ignore multi-touch
             e.preventDefault();
             touchElement = e.target.closest('.word-item');
             touchStartIndex = +touchElement.getAttribute('data-index');
             const touch = e.touches[0];
+            touchStartY = touch.clientY;
             const rect = touchElement.getBoundingClientRect();
             touchOffsetY = touch.clientY - rect.top;
-            touchElement.classList.add('touch-dragging');
-            touchElement.style.position = 'absolute';
-            touchElement.style.width = `${rect.width}px`;
-            touchElement.style.top = `${rect.top}px`;
+            isDragging = false;
         }
 
         function handleTouchMove(e) {
-            e.preventDefault();
             if (!touchElement) return;
+            e.preventDefault();
             const touch = e.touches[0];
-            touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
+            const deltaY = Math.abs(touch.clientY - touchStartY);
 
-            // Find the element under the touch point
-            const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-            const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
-            document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
-            if (targetItem) {
-                targetItem.classList.add('over');
+            if (!isDragging && deltaY > dragThreshold) {
+                isDragging = true;
+                touchElement.classList.add('touch-dragging');
+                touchElement.style.position = 'absolute';
+                touchElement.style.width = `${touchElement.getBoundingClientRect().width}px`;
+                touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
+            }
+
+            if (isDragging) {
+                touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
+
+                // Find the element under the touch point
+                const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+                const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
+                document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
+                if (targetItem) {
+                    targetItem.classList.add('over');
+                }
             }
         }
 
         function handleTouchEnd(e) {
             e.preventDefault();
             if (!touchElement) return;
-            touchElement.classList.remove('touch-dragging');
-            touchElement.style.position = '';
-            touchElement.style.width = '';
-            touchElement.style.top = '';
 
-            // Find the drop target
-            const touch = e.changedTouches[0];
-            const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-            const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
-            if (targetItem) {
-                const touchEndIndex = +targetItem.getAttribute('data-index');
-                if (touchStartIndex !== touchEndIndex) {
-                    reorderWords(touchStartIndex, touchEndIndex);
+            if (isDragging) {
+                touchElement.classList.remove('touch-dragging');
+                touchElement.style.position = '';
+                touchElement.style.width = '';
+                touchElement.style.top = '';
+
+                // Find the drop target
+                const touch = e.changedTouches[0];
+                const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+                const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
+                if (targetItem) {
+                    const touchEndIndex = +targetItem.getAttribute('data-index');
+                    if (touchStartIndex !== touchEndIndex) {
+                        reorderWords(touchStartIndex, touchEndIndex);
+                    }
                 }
             }
 
@@ -287,6 +311,7 @@
             touchElement = null;
             touchStartIndex = null;
             touchOffsetY = 0;
+            isDragging = false;
         }
 
         function reorderWords(fromIndex, toIndex) {
