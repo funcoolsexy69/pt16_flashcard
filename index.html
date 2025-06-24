@@ -159,7 +159,6 @@
     <div class="word-list-container">
         <div class="word-list" id="wordList"></div>
     </div>
-    <audio id="audioPlayer" style="display: none;"></audio>
 
     <script>
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
@@ -181,7 +180,6 @@
         const wordInput = document.getElementById('wordInput');
         const meaningInput = document.getElementById('meaningInput');
         const wordList = document.getElementById('wordList');
-        const audioPlayer = document.getElementById('audioPlayer');
 
         function saveWords() {
             localStorage.setItem('flashcards', JSON.stringify(words));
@@ -199,22 +197,42 @@
             meaningElement.textContent = words[currentIndex].meaning;
         }
 
-        async function playWord() {
+        function playWord() {
             if (words.length === 0 || wordElement.textContent === "단어 없음") {
                 alert('발음할 단어가 없습니다.');
                 return;
             }
+            if (!window.speechSynthesis) {
+                alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+                return;
+            }
             try {
-                const word = encodeURIComponent(words[currentIndex].word);
-                const ttsUrl = `https://translate.google.com/translate_tts?ie=UTF-8&q=${word}&tl=en&client=tw-ob`;
-                audioPlayer.src = ttsUrl;
-                await audioPlayer.play();
-                audioPlayer.onended = () => audioPlayer.src = ''; // Clean up
+                const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
+                utterance.lang = 'en-US';
+                utterance.volume = 1.0;
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                // Select a US English voice
+                const voices = window.speechSynthesis.getVoices();
+                const englishVoice = voices.find(voice => voice.lang === 'en-US') || voices.find(voice => voice.lang.startsWith('en'));
+                if (englishVoice) {
+                    utterance.voice = englishVoice;
+                } else {
+                    console.warn('No English voice found; using default voice.');
+                }
+                // Cancel any ongoing speech to prevent overlap
+                window.speechSynthesis.cancel();
+                window.speechSynthesis.speak(utterance);
             } catch (error) {
-                console.error('Google Translate TTS error:', error);
-                alert('발음 재생에 실패했습니다. 네트워크를 확인하거나 나중에 다시 시도해주세요.');
+                console.error('SpeechSynthesis error:', error);
+                alert('발음 재생에 실패했습니다. 브라우저 설정을 확인해주세요.');
             }
         }
+
+        // Ensure voices are loaded (some browsers load asynchronously)
+        window.speechSynthesis.onvoiceschanged = () => {
+            // Triggered when voices are loaded; no action needed unless debugging
+        };
 
         function updateWordList() {
             wordList.innerHTML = '';
