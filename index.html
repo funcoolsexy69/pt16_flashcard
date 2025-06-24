@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>영어 단어 플래시카드</title>
     <style>
         body {
@@ -78,13 +78,23 @@
         }
         .word-list-container {
             margin: 20px;
-            max-width: 300px;
-            max-height: 300px; /* Adjust as needed for your design */
+            width: 300px;
+            max-height: 60vh; /* Use viewport height for flexibility */
+            min-height: 100px; /* Ensure visibility even with few items */
             overflow-y: auto;
             -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scrollbar-width: thin; /* For Firefox */
+        }
+        .word-list-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        .word-list-container::-webkit-scrollbar-thumb {
+            background-color: #888;
+            border-radius: 4px;
         }
         .word-list {
             width: 100%;
+            min-height: 100%; /* Ensure list fills container */
         }
         .word-item {
             display: flex;
@@ -97,6 +107,7 @@
             border-radius: 5px;
             position: relative;
             z-index: 1;
+            user-select: none; /* Prevent text selection during drag */
         }
         .word-item.dragging, .word-item.touch-dragging {
             opacity: 0.5;
@@ -146,7 +157,12 @@
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
             { word: "Apple", meaning: "사과" },
             { word: "Book", meaning: "책" },
-            { word: "Cat", meaning: "고양이" }
+            { word: "Cat", meaning: "고양이" },
+            { word: "Dog", meaning: "개" },
+            { word: "Elephant", meaning: "코끼리" },
+            { word: "Fish", meaning: "물고기" },
+            { word: "Giraffe", meaning: "기린" },
+            { word: "Horse", meaning: "말" }
         ];
         let currentIndex = 0;
         let editIndex = -1;
@@ -248,7 +264,6 @@
         // Touch Handlers
         function handleTouchStart(e) {
             if (e.touches.length > 1) return; // Ignore multi-touch
-            e.preventDefault();
             touchElement = e.target.closest('.word-item');
             touchStartIndex = +touchElement.getAttribute('data-index');
             const touch = e.touches[0];
@@ -260,11 +275,11 @@
 
         function handleTouchMove(e) {
             if (!touchElement) return;
-            e.preventDefault();
             const touch = e.touches[0];
             const deltaY = Math.abs(touch.clientY - touchStartY);
 
             if (!isDragging && deltaY > dragThreshold) {
+                e.preventDefault(); // Prevent scrolling only when dragging starts
                 isDragging = true;
                 touchElement.classList.add('touch-dragging');
                 touchElement.style.position = 'absolute';
@@ -273,6 +288,7 @@
             }
 
             if (isDragging) {
+                e.preventDefault();
                 touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
 
                 // Find the element under the touch point
@@ -286,10 +302,10 @@
         }
 
         function handleTouchEnd(e) {
-            e.preventDefault();
             if (!touchElement) return;
 
             if (isDragging) {
+                e.preventDefault();
                 touchElement.classList.remove('touch-dragging');
                 touchElement.style.position = '';
                 touchElement.style.width = '';
