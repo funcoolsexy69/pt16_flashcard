@@ -13,6 +13,7 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            touch-action: none; /* Prevent default touch behaviors like scrolling */
         }
         .card-container {
             perspective: 1000px;
@@ -89,9 +90,13 @@
             background-color: #fff;
             margin: 2px 0;
             border-radius: 5px;
+            position: relative;
+            z-index: 1;
         }
-        .word-item.dragging {
+        .word-item.dragging, .word-item.touch-dragging {
             opacity: 0.5;
+            z-index: 100;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
         }
         .word-item.over {
             border: 2px dashed #007bff;
@@ -177,18 +182,27 @@
                         <button onclick="deleteWord(${index})">삭제</button>
                     </div>
                 `;
+                // Mouse drag events
                 div.addEventListener('dragstart', handleDragStart);
                 div.addEventListener('dragover', handleDragOver);
                 div.addEventListener('dragenter', handleDragEnter);
                 div.addEventListener('dragleave', handleDragLeave);
                 div.addEventListener('drop', handleDrop);
                 div.addEventListener('dragend', handleDragEnd);
+                // Touch events
+                div.addEventListener('touchstart', handleTouchStart, { passive: false });
+                div.addEventListener('touchmove', handleTouchMove, { passive: false });
+                div.addEventListener('touchend', handleTouchEnd, { passive: false });
                 wordList.appendChild(div);
             });
         }
 
         let dragStartIndex = null;
+        let touchStartIndex = null;
+        let touchElement = null;
+        let touchOffsetY = 0;
 
+        // Mouse Drag Handlers
         function handleDragStart(e) {
             dragStartIndex = +e.target.getAttribute('data-index');
             e.target.classList.add('dragging');
@@ -219,6 +233,60 @@
         function handleDragEnd(e) {
             e.target.classList.remove('dragging');
             document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
+        }
+
+        // Touch Handlers
+        function handleTouchStart(e) {
+            e.preventDefault();
+            touchElement = e.target.closest('.word-item');
+            touchStartIndex = +touchElement.getAttribute('data-index');
+            const touch = e.touches[0];
+            const rect = touchElement.getBoundingClientRect();
+            touchOffsetY = touch.clientY - rect.top;
+            touchElement.classList.add('touch-dragging');
+            touchElement.style.position = 'absolute';
+            touchElement.style.width = `${rect.width}px`;
+            touchElement.style.top = `${rect.top}px`;
+        }
+
+        function handleTouchMove(e) {
+            e.preventDefault();
+            if (!touchElement) return;
+            const touch = e.touches[0];
+            touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
+
+            // Find the element under the touch point
+            const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+            const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
+            document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
+            if (targetItem) {
+                targetItem.classList.add('over');
+            }
+        }
+
+        function handleTouchEnd(e) {
+            e.preventDefault();
+            if (!touchElement) return;
+            touchElement.classList.remove('touch-dragging');
+            touchElement.style.position = '';
+            touchElement.style.width = '';
+            touchElement.style.top = '';
+
+            // Find the drop target
+            const touch = e.changedTouches[0];
+            const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
+            const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
+            if (targetItem) {
+                const touchEndIndex = +targetItem.getAttribute('data-index');
+                if (touchStartIndex !== touchEndIndex) {
+                    reorderWords(touchStartIndex, touchEndIndex);
+                }
+            }
+
+            document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
+            touchElement = null;
+            touchStartIndex = null;
+            touchOffsetY = 0;
         }
 
         function reorderWords(fromIndex, toIndex) {
