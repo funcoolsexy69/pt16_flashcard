@@ -13,6 +13,7 @@
             min-height: 100vh;
             margin: 0;
             background-color: #f0f0f0;
+            overflow-x: hidden; /* Prevent horizontal scrolling */
         }
         .card-container {
             perspective: 1000px;
@@ -79,22 +80,12 @@
         .word-list-container {
             margin: 20px;
             width: 300px;
-            max-height: 60vh; /* Use viewport height for flexibility */
-            min-height: 100px; /* Ensure visibility even with few items */
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-            scrollbar-width: thin; /* For Firefox */
-        }
-        .word-list-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        .word-list-container::-webkit-scrollbar-thumb {
-            background-color: #888;
-            border-radius: 4px;
+            /* Removed max-height and overflow-y to allow natural page scroll */
+            /* min-height: 100px; still optional for empty state */
         }
         .word-list {
             width: 100%;
-            min-height: 100%; /* Ensure list fills container */
+            /* Removed min-height to let content determine height */
         }
         .word-item {
             display: flex;
@@ -205,14 +196,12 @@
                         <button onclick="deleteWord(${index})">삭제</button>
                     </div>
                 `;
-                // Mouse drag events
                 div.addEventListener('dragstart', handleDragStart);
                 div.addEventListener('dragover', handleDragOver);
                 div.addEventListener('dragenter', handleDragEnter);
                 div.addEventListener('dragleave', handleDragLeave);
                 div.addEventListener('drop', handleDrop);
                 div.addEventListener('dragend', handleDragEnd);
-                // Touch events
                 div.addEventListener('touchstart', handleTouchStart, { passive: false });
                 div.addEventListener('touchmove', handleTouchMove, { passive: false });
                 div.addEventListener('touchend', handleTouchEnd, { passive: false });
@@ -226,9 +215,8 @@
         let touchOffsetY = 0;
         let touchStartY = 0;
         let isDragging = false;
-        const dragThreshold = 10; // Pixels to move before considering it a drag
+        const dragThreshold = 10;
 
-        // Mouse Drag Handlers
         function handleDragStart(e) {
             dragStartIndex = +e.target.getAttribute('data-index');
             e.target.classList.add('dragging');
@@ -261,9 +249,8 @@
             document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
         }
 
-        // Touch Handlers
         function handleTouchStart(e) {
-            if (e.touches.length > 1) return; // Ignore multi-touch
+            if (e.touches.length > 1) return;
             touchElement = e.target.closest('.word-item');
             touchStartIndex = +touchElement.getAttribute('data-index');
             const touch = e.touches[0];
@@ -279,7 +266,7 @@
             const deltaY = Math.abs(touch.clientY - touchStartY);
 
             if (!isDragging && deltaY > dragThreshold) {
-                e.preventDefault(); // Prevent scrolling only when dragging starts
+                e.preventDefault();
                 isDragging = true;
                 touchElement.classList.add('touch-dragging');
                 touchElement.style.position = 'absolute';
@@ -290,8 +277,6 @@
             if (isDragging) {
                 e.preventDefault();
                 touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
-
-                // Find the element under the touch point
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
                 document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
@@ -310,8 +295,6 @@
                 touchElement.style.position = '';
                 touchElement.style.width = '';
                 touchElement.style.top = '';
-
-                // Find the drop target
                 const touch = e.changedTouches[0];
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
@@ -408,7 +391,6 @@
             }
         }
 
-        // 초기화
         showCard();
         updateWordList();
     </script>
