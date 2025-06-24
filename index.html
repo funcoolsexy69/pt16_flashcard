@@ -206,33 +206,47 @@
                 alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
                 return;
             }
-            try {
-                const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
-                utterance.lang = 'en-US';
-                utterance.volume = 1.0;
-                utterance.rate = 1.0;
-                utterance.pitch = 1.0;
-                // Select a US English voice
-                const voices = window.speechSynthesis.getVoices();
-                const englishVoice = voices.find(voice => voice.lang === 'en-US') || voices.find(voice => voice.lang.startsWith('en'));
-                if (englishVoice) {
-                    utterance.voice = englishVoice;
-                } else {
-                    console.warn('No English voice found; using default voice.');
+
+            // Create utterance
+            const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
+            utterance.lang = 'en-US';
+            utterance.volume = 1.0;
+            utterance.rate = 0.9; // Slightly slower for clarity on iOS
+            utterance.pitch = 1.0;
+
+            // Function to select and play voice
+            const trySpeak = () => {
+                try {
+                    const voices = window.speechSynthesis.getVoices();
+                    console.log('Available voices:', voices); // Debug: Log voices
+                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Siri')) 
+                        || voices.find(voice => voice.lang === 'en-US') 
+                        || voices.find(voice => voice.lang.startsWith('en'));
+                    if (preferredVoice) {
+                        utterance.voice = preferredVoice;
+                        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
+                    } else {
+                        console.warn('No suitable English voice found; using default voice.');
+                    }
+                    window.speechSynthesis.cancel(); // Prevent overlap
+                    window.speechSynthesis.speak(utterance);
+                } catch (error) {
+                    console.error('SpeechSynthesis error:', error);
+                    alert('발음 재생에 실패했습니다. iPad의 음성 설정을 확인하거나 다른 브라우저를 시도해주세요.');
                 }
-                // Cancel any ongoing speech to prevent overlap
-                window.speechSynthesis.cancel();
-                window.speechSynthesis.speak(utterance);
-            } catch (error) {
-                console.error('SpeechSynthesis error:', error);
-                alert('발음 재생에 실패했습니다. 브라우저 설정을 확인해주세요.');
+            };
+
+            // Check if voices are loaded
+            if (window.speechSynthesis.getVoices().length === 0) {
+                window.speechSynthesis.onvoiceschanged = () => {
+                    console.log('Voices loaded asynchronously');
+                    trySpeak();
+                    window.speechSynthesis.onvoiceschanged = null; // Clean up
+                };
+            } else {
+                trySpeak();
             }
         }
-
-        // Ensure voices are loaded (some browsers load asynchronously)
-        window.speechSynthesis.onvoiceschanged = () => {
-            // Triggered when voices are loaded; no action needed unless debugging
-        };
 
         function updateWordList() {
             wordList.innerHTML = '';
