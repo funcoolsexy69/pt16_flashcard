@@ -77,6 +77,12 @@
         button:hover {
             background-color: #0056b3;
         }
+        button.speak {
+            background-color: #17a2b8;
+        }
+        button.speak:hover {
+            background-color: #117a8b;
+        }
         .word-list-container {
             margin: 20px;
             width: 300px;
@@ -96,6 +102,10 @@
             position: relative;
             z-index: 1;
             user-select: none;
+            cursor: pointer;
+        }
+        .word-item:hover {
+            background-color: #f8f9fa;
         }
         .word-item.dragging, .word-item.touch-dragging {
             opacity: 0.5;
@@ -113,10 +123,18 @@
         .word-item button.edit {
             background-color: #28a745;
         }
+        .word-item button.move {
+            background-color: #ffc107;
+            color: white;
+        }
         .word-item .number {
             min-width: 30px;
             font-weight: bold;
             color: #333;
+        }
+        .word-item .word-text {
+            flex-grow: 1;
+            padding: 0 5px;
         }
     </style>
 </head>
@@ -130,6 +148,7 @@
     </div>
     <div class="controls">
         <button onclick="prevCard()">이전 카드</button>
+        <button class="speak" onclick="listenWithNaturalReader()">발음 듣기</button>
         <button onclick="nextCard()">다음 카드</button>
     </div>
     <div class="form-container">
@@ -178,30 +197,54 @@
             meaningElement.textContent = words[currentIndex].meaning;
         }
 
+        function listenWithNaturalReader() {
+            if (words.length === 0 || wordElement.textContent === "단어 없음") {
+                alert('발음할 단어가 없습니다.');
+                return;
+            }
+            const word = encodeURIComponent(words[currentIndex].word);
+            window.open('https://www.naturalreaders.com/online/', '_blank');
+            navigator.clipboard.writeText(words[currentIndex].word).then(() => {
+                alert('단어 "' + words[currentIndex].word + '"가 클립보드에 복사되었습니다. NaturalReader 페이지에서 붙여넣기하여 발음을 들어보세요.');
+            }).catch(() => {
+                alert('단어: "' + words[currentIndex].word + '". NaturalReader 페이지에 이 단어를 붙여넣어 발음을 들어보세요.');
+            });
+        }
+
         function updateWordList() {
             wordList.innerHTML = '';
             words.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'word-item';
-                div.setAttribute('draggable', 'true');
                 div.setAttribute('data-index', index);
                 div.innerHTML = `
                     <span class="number">${index + 1}.</span>
-                    <span>${item.word} - ${item.meaning}</span>
+                    <span class="word-text">${item.word} - ${item.meaning}</span>
                     <div>
                         <button class="edit" onclick="editWord(${index})">수정</button>
                         <button onclick="deleteWord(${index})">삭제</button>
+                        <button class="move" draggable="true">이동</button>
                     </div>
                 `;
-                div.addEventListener('dragstart', handleDragStart);
-                div.addEventListener('dragover', handleDragOver);
-                div.addEventListener('dragenter', handleDragEnter);
-                div.addEventListener('dragleave', handleDragLeave);
-                div.addEventListener('drop', handleDrop);
-                div.addEventListener('dragend', handleDragEnd);
-                div.addEventListener('touchstart', handleTouchStart, { passive: false });
-                div.addEventListener('touchmove', handleTouchMove, { passive: false });
-                div.addEventListener('touchend', handleTouchEnd, { passive: false });
+                // Click handler for selecting word
+                div.addEventListener('click', (e) => {
+                    if (!e.target.closest('.move, button:not(.move)')) {
+                        currentIndex = index;
+                        showCard();
+                    }
+                });
+                // Drag events on move button
+                const dragHandle = div.querySelector('.move');
+                dragHandle.addEventListener('dragstart', handleDragStart);
+                dragHandle.addEventListener('dragover', handleDragOver);
+                dragHandle.addEventListener('dragenter', handleDragEnter);
+                dragHandle.addEventListener('dragleave', handleDragLeave);
+                dragHandle.addEventListener('drop', handleDrop);
+                dragHandle.addEventListener('dragend', handleDragEnd);
+                // Touch events on move button
+                dragHandle.addEventListener('touchstart', handleTouchStart, { passive: false });
+                dragHandle.addEventListener('touchmove', handleTouchMove, { passive: false });
+                dragHandle.addEventListener('touchend', handleTouchEnd, { passive: false });
                 wordList.appendChild(div);
             });
         }
@@ -212,14 +255,15 @@
         let touchOffsetY = 0;
         let touchStartY = 0;
         let isDragging = false;
-        const dragThreshold = 10; // Pixels to move before considering movement
-        const holdThreshold = 300; // Milliseconds to hold before initiating drag
+        const dragThreshold = 10;
+        const holdThreshold = 300;
         let touchStartTime = 0;
 
-        // Mouse Drag Handlers
         function handleDragStart(e) {
-            dragStartIndex = +e.target.getAttribute('data-index');
-            e.target.classList.add('dragging');
+            const wordItem = e.target.closest('.word-item');
+            dragStartIndex = +wordItem.getAttribute('data-index');
+            wordItem.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', dragStartIndex);
         }
 
         function handleDragOver(e) {
@@ -228,37 +272,48 @@
 
         function handleDragEnter(e) {
             e.preventDefault();
-            e.target.closest('.word-item').classList.add('over');
+            const wordItem = e.target.closest('.word-item');
+            if (wordItem) {
+                wordItem.classList.add('over');
+            }
         }
 
         function handleDragLeave(e) {
-            e.target.closest('.word-item').classList.remove('over');
+            const wordItem = e.target.closest('.word-item');
+            if (wordItem) {
+                wordItem.classList.remove('over');
+            }
         }
 
         function handleDrop(e) {
             e.preventDefault();
-            const dragEndIndex = +e.target.closest('.word-item').getAttribute('data-index');
-            if (dragStartIndex !== dragEndIndex) {
-                reorderWords(dragStartIndex, dragEndIndex);
+            const wordItem = e.target.closest('.word-item');
+            if (wordItem) {
+                const dragEndIndex = +wordItem.getAttribute('data-index');
+                if (dragStartIndex !== dragEndIndex) {
+                    reorderWords(dragStartIndex, dragEndIndex);
+                }
+                wordItem.classList.remove('over');
             }
-            e.target.closest('.word-item').classList.remove('over');
         }
 
         function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
+            const wordItem = e.target.closest('.word-item');
+            if (wordItem) {
+                wordItem.classList.remove('dragging');
+            }
             document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
         }
 
-        // Touch Handlers
         function handleTouchStart(e) {
-            if (e.touches.length > 1) return; // Ignore multi-touch
+            if (e.touches.length > 1) return;
             touchElement = e.target.closest('.word-item');
             touchStartIndex = +touchElement.getAttribute('data-index');
             const touch = e.touches[0];
             touchStartY = touch.clientY;
             const rect = touchElement.getBoundingClientRect();
             touchOffsetY = touch.clientY - rect.top;
-            touchStartTime = Date.now(); // Record start time
+            touchStartTime = Date.now();
             isDragging = false;
         }
 
@@ -268,9 +323,8 @@
             const deltaY = Math.abs(touch.clientY - touchStartY);
             const timeElapsed = Date.now() - touchStartTime;
 
-            // Only start dragging if hold threshold and movement threshold are met
             if (!isDragging && timeElapsed >= holdThreshold && deltaY > dragThreshold) {
-                e.preventDefault(); // Prevent scrolling only when dragging starts
+                e.preventDefault();
                 isDragging = true;
                 touchElement.classList.add('touch-dragging');
                 touchElement.style.position = 'absolute';
@@ -281,8 +335,6 @@
             if (isDragging) {
                 e.preventDefault();
                 touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
-
-                // Find the element under the touch point
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
                 document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
@@ -301,8 +353,6 @@
                 touchElement.style.position = '';
                 touchElement.style.width = '';
                 touchElement.style.top = '';
-
-                // Find the drop target
                 const touch = e.changedTouches[0];
                 const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
                 const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
