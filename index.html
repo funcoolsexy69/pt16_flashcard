@@ -112,9 +112,15 @@
         .word-item button.edit {
             background-color: #66bb6a; /* Green for edit */
         }
-        .word-item button.up, .word-item button.down {
-            background-color: #ffca28; /* Yellow for arrows */
-            color: #333;
+        .word-item button.up {
+            background-color: #800080; /* Purple for up */
+            color: white;
+            padding: 5px 8px;
+            font-size: 12px;
+        }
+        .word-item button.down {
+            background-color: #ff69b4; /* Hot pink for down */
+            color: white;
             padding: 5px 8px;
             font-size: 12px;
         }
@@ -243,8 +249,8 @@
                     <div>
                         <button class="edit" onclick="editWord(${index})">Edit</button>
                         <button onclick="deleteWord(${index})">Delete</button>
-                        <button class="up" onclick="moveUp(${index})">↑</button>
-                        <button class="down" onclick="moveDown(${index})">↓</button>
+                        <button class="up" onclick="moveUp(${index})">up</button>
+                        <button class="down" onclick="moveDown(${index})">down</button>
                     </div>
                 `;
                 div.addEventListener('click', (e) => {
