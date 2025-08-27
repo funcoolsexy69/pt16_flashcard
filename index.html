@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="mul">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -99,21 +99,10 @@
             background-color: #fff;
             margin: 2px 0;
             border-radius: 5px;
-            position: relative;
-            z-index: 1;
-            user-select: none;
             cursor: pointer;
         }
         .word-item:hover {
             background-color: #f8f9fa;
-        }
-        .word-item.dragging, .word-item.touch-dragging {
-            opacity: 0.5;
-            z-index: 100;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        .word-item.over {
-            border: 2px dashed #007bff;
         }
         .word-item button {
             background-color: #dc3545;
@@ -123,9 +112,11 @@
         .word-item button.edit {
             background-color: #28a745;
         }
-        .word-item button.move {
+        .word-item button.up, .word-item button.down {
             background-color: #ffc107;
-            color: white;
+            color: #333;
+            padding: 5px 8px;
+            font-size: 12px;
         }
         .word-item .number {
             min-width: 30px;
@@ -159,7 +150,6 @@
     <div class="word-list-container">
         <div class="word-list" id="wordList"></div>
     </div>
-
     <script>
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
             { word: "Apple", meaning: "사과" },
@@ -173,18 +163,15 @@
         ];
         let currentIndex = 0;
         let editIndex = -1;
-
         const card = document.getElementById('card');
         const wordElement = document.getElementById('word');
         const meaningElement = document.getElementById('meaning');
         const wordInput = document.getElementById('wordInput');
         const meaningInput = document.getElementById('meaningInput');
         const wordList = document.getElementById('wordList');
-
         function saveWords() {
             localStorage.setItem('flashcards', JSON.stringify(words));
         }
-
         function showCard() {
             if (words.length === 0) {
                 wordElement.textContent = "단어 없음";
@@ -196,7 +183,6 @@
             wordElement.textContent = words[currentIndex].word;
             meaningElement.textContent = words[currentIndex].meaning;
         }
-
         function playWord() {
             if (words.length === 0 || wordElement.textContent === "단어 없음") {
                 alert('발음할 단어가 없습니다.');
@@ -206,21 +192,19 @@
                 alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
                 return;
             }
-
             // Create utterance
             const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
             utterance.lang = 'en-US';
             utterance.volume = 1.0;
             utterance.rate = 0.9; // Slightly slower for clarity on iOS
             utterance.pitch = 1.0;
-
             // Function to select and play voice
             const trySpeak = () => {
                 try {
                     const voices = window.speechSynthesis.getVoices();
                     console.log('Available voices:', voices); // Debug: Log voices
-                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Siri')) 
-                        || voices.find(voice => voice.lang === 'en-US') 
+                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Siri'))
+                        || voices.find(voice => voice.lang === 'en-US')
                         || voices.find(voice => voice.lang.startsWith('en'));
                     if (preferredVoice) {
                         utterance.voice = preferredVoice;
@@ -235,7 +219,6 @@
                     alert('발음 재생에 실패했습니다. iPad의 음성 설정을 확인하거나 다른 브라우저를 시도해주세요.');
                 }
             };
-
             // Check if voices are loaded
             if (window.speechSynthesis.getVoices().length === 0) {
                 window.speechSynthesis.onvoiceschanged = () => {
@@ -247,7 +230,6 @@
                 trySpeak();
             }
         }
-
         function updateWordList() {
             wordList.innerHTML = '';
             words.forEach((item, index) => {
@@ -260,152 +242,19 @@
                     <div>
                         <button class="edit" onclick="editWord(${index})">수정</button>
                         <button onclick="deleteWord(${index})">삭제</button>
-                        <button class="move" draggable="true">이동</button>
+                        <button class="up" onclick="moveUp(${index})">↑</button>
+                        <button class="down" onclick="moveDown(${index})">↓</button>
                     </div>
                 `;
                 div.addEventListener('click', (e) => {
-                    if (!e.target.closest('.move, button:not(.move)')) {
+                    if (!e.target.closest('button')) {
                         currentIndex = index;
                         showCard();
                     }
                 });
-                const dragHandle = div.querySelector('.move');
-                dragHandle.addEventListener('dragstart', handleDragStart);
-                dragHandle.addEventListener('dragover', handleDragOver);
-                dragHandle.addEventListener('dragenter', handleDragEnter);
-                dragHandle.addEventListener('dragleave', handleDragLeave);
-                dragHandle.addEventListener('drop', handleDrop);
-                dragHandle.addEventListener('dragend', handleDragEnd);
-                dragHandle.addEventListener('touchstart', handleTouchStart, { passive: false });
-                dragHandle.addEventListener('touchmove', handleTouchMove, { passive: false });
-                dragHandle.addEventListener('touchend', handleTouchEnd, { passive: false });
                 wordList.appendChild(div);
             });
         }
-
-        let dragStartIndex = null;
-        let touchStartIndex = null;
-        let touchElement = null;
-        let touchOffsetY = 0;
-        let touchStartY = 0;
-        let isDragging = false;
-        const dragThreshold = 10;
-        const holdThreshold = 300;
-        let touchStartTime = 0;
-
-        function handleDragStart(e) {
-            const wordItem = e.target.closest('.word-item');
-            dragStartIndex = +wordItem.getAttribute('data-index');
-            wordItem.classList.add('dragging');
-            e.dataTransfer.setData('text/plain', dragStartIndex);
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-        }
-
-        function handleDragEnter(e) {
-            e.preventDefault();
-            const wordItem = e.target.closest('.word-item');
-            if (wordItem) {
-                wordItem.classList.add('over');
-            }
-        }
-
-        function handleDragLeave(e) {
-            const wordItem = e.target.closest('.word-item');
-            if (wordItem) {
-                wordItem.classList.remove('over');
-            }
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            const wordItem = e.target.closest('.word-item');
-            if (wordItem) {
-                const dragEndIndex = +wordItem.getAttribute('data-index');
-                if (dragStartIndex !== dragEndIndex) {
-                    reorderWords(dragStartIndex, dragEndIndex);
-                }
-                wordItem.classList.remove('over');
-            }
-        }
-
-        function handleDragEnd(e) {
-            const wordItem = e.target.closest('.word-item');
-            if (wordItem) {
-                wordItem.classList.remove('dragging');
-            }
-            document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
-        }
-
-        function handleTouchStart(e) {
-            if (e.touches.length > 1) return;
-            touchElement = e.target.closest('.word-item');
-            touchStartIndex = +touchElement.getAttribute('data-index');
-            const touch = e.touches[0];
-            touchStartY = touch.clientY;
-            const rect = touchElement.getBoundingClientRect();
-            touchOffsetY = touch.clientY - rect.top;
-            touchStartTime = Date.now();
-            isDragging = false;
-        }
-
-        function handleTouchMove(e) {
-            if (!touchElement) return;
-            const touch = e.touches[0];
-            const deltaY = Math.abs(touch.clientY - touchStartY);
-            const timeElapsed = Date.now() - touchStartTime;
-
-            if (!isDragging && timeElapsed >= holdThreshold && deltaY > dragThreshold) {
-                e.preventDefault();
-                isDragging = true;
-                touchElement.classList.add('touch-dragging');
-                touchElement.style.position = 'absolute';
-                touchElement.style.width = `${touchElement.getBoundingClientRect().width}px`;
-                touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
-            }
-
-            if (isDragging) {
-                e.preventDefault();
-                touchElement.style.top = `${touch.clientY - touchOffsetY}px`;
-                const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-                const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
-                document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
-                if (targetItem) {
-                    targetItem.classList.add('over');
-                }
-            }
-        }
-
-        function handleTouchEnd(e) {
-            if (!touchElement) return;
-
-            if (isDragging) {
-                e.preventDefault();
-                touchElement.classList.remove('touch-dragging');
-                touchElement.style.position = '';
-                touchElement.style.width = '';
-                touchElement.style.top = '';
-                const touch = e.changedTouches[0];
-                const elements = document.elementsFromPoint(touch.clientX, touch.clientY);
-                const targetItem = elements.find(el => el.classList.contains('word-item') && el !== touchElement);
-                if (targetItem) {
-                    const touchEndIndex = +targetItem.getAttribute('data-index');
-                    if (touchStartIndex !== touchEndIndex) {
-                        reorderWords(touchStartIndex, touchEndIndex);
-                    }
-                }
-            }
-
-            document.querySelectorAll('.word-item').forEach(item => item.classList.remove('over'));
-            touchElement = null;
-            touchStartIndex = null;
-            touchOffsetY = 0;
-            touchStartTime = 0;
-            isDragging = false;
-        }
-
         function reorderWords(fromIndex, toIndex) {
             const [movedItem] = words.splice(fromIndex, 1);
             words.splice(toIndex, 0, movedItem);
@@ -420,27 +269,33 @@
             showCard();
             updateWordList();
         }
-
+        function moveUp(index) {
+            if (index > 0) {
+                reorderWords(index, index - 1);
+            }
+        }
+        function moveDown(index) {
+            if (index < words.length - 1) {
+                reorderWords(index, index + 1);
+            }
+        }
         card.addEventListener('click', () => {
             if (words.length > 0) {
                 card.classList.toggle('flipped');
             }
         });
-
         function nextCard() {
             if (words.length > 0) {
                 currentIndex = (currentIndex + 1) % words.length;
                 showCard();
             }
         }
-
         function prevCard() {
             if (words.length > 0) {
                 currentIndex = (currentIndex - 1 + words.length) % words.length;
                 showCard();
             }
         }
-
         function addOrUpdateWord() {
             const word = wordInput.value.trim();
             const meaning = meaningInput.value.trim();
@@ -461,14 +316,12 @@
                 alert('단어와 뜻을 모두 입력하세요.');
             }
         }
-
         function editWord(index) {
             wordInput.value = words[index].word;
             meaningInput.value = words[index].meaning;
             editIndex = index;
             wordInput.focus();
         }
-
         function deleteWord(index) {
             if (confirm('이 단어를 삭제하시겠습니까?')) {
                 words.splice(index, 1);
@@ -483,7 +336,6 @@
                 updateWordList();
             }
         }
-
         showCard();
         updateWordList();
     </script>
