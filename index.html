@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="mul">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>영어 단어 플래시카드</title>
+    <title>English Word Flashcards</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -130,36 +130,36 @@
     </style>
 </head>
 <body>
-    <h2>영어 단어 플래시카드</h2>
+    <h2>English Word Flashcards</h2>
     <div class="card-container">
         <div class="card" id="card">
-            <div class="card-front" id="word">단어</div>
-            <div class="card-back" id="meaning">뜻</div>
+            <div class="card-front" id="word">Word</div>
+            <div class="card-back" id="meaning">Meaning</div>
         </div>
     </div>
     <div class="controls">
-        <button onclick="prevCard()">이전 카드</button>
-        <button class="speak" onclick="playWord()">발음 듣기</button>
-        <button onclick="nextCard()">다음 카드</button>
+        <button onclick="prevCard()">Previous Card</button>
+        <button class="speak" onclick="playWord()">Listen to Pronunciation</button>
+        <button onclick="nextCard()">Next Card</button>
     </div>
     <div class="form-container">
-        <input type="text" id="wordInput" placeholder="영어 단어">
-        <input type="text" id="meaningInput" placeholder="뜻">
-        <button onclick="addOrUpdateWord()">추가/수정</button>
+        <input type="text" id="wordInput" placeholder="English Word">
+        <input type="text" id="meaningInput" placeholder="Meaning">
+        <button onclick="addOrUpdateWord()">Add/Update</button>
     </div>
     <div class="word-list-container">
         <div class="word-list" id="wordList"></div>
     </div>
     <script>
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
-            { word: "Apple", meaning: "사과" },
-            { word: "Book", meaning: "책" },
-            { word: "Cat", meaning: "고양이" },
-            { word: "Dog", meaning: "개" },
-            { word: "Elephant", meaning: "코끼리" },
-            { word: "Fish", meaning: "물고기" },
-            { word: "Giraffe", meaning: "기린" },
-            { word: "Horse", meaning: "말" }
+            { word: "Apple", meaning: "A round fruit with red or green skin" },
+            { word: "Book", meaning: "A written or printed work" },
+            { word: "Cat", meaning: "A small domesticated carnivorous mammal" },
+            { word: "Dog", meaning: "A domesticated carnivorous mammal" },
+            { word: "Elephant", meaning: "A large mammal with a trunk" },
+            { word: "Fish", meaning: "A limbless cold-blooded vertebrate" },
+            { word: "Giraffe", meaning: "A tall African mammal with a long neck" },
+            { word: "Horse", meaning: "A large domesticated mammal used for riding" }
         ];
         let currentIndex = 0;
         let editIndex = -1;
@@ -174,8 +174,8 @@
         }
         function showCard() {
             if (words.length === 0) {
-                wordElement.textContent = "단어 없음";
-                meaningElement.textContent = "단어를 추가하세요";
+                wordElement.textContent = "No Words";
+                meaningElement.textContent = "Please add words";
                 card.classList.remove('flipped');
                 return;
             }
@@ -184,26 +184,28 @@
             meaningElement.textContent = words[currentIndex].meaning;
         }
         function playWord() {
-            if (words.length === 0 || wordElement.textContent === "단어 없음") {
-                alert('발음할 단어가 없습니다.');
+            if (words.length === 0 || wordElement.textContent === "No Words") {
+                alert('No word to pronounce.');
                 return;
             }
             if (!window.speechSynthesis) {
-                alert('이 브라우저는 음성 합성을 지원하지 않습니다.');
+                alert('This browser does not support speech synthesis.');
                 return;
             }
             // Create utterance
             const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
             utterance.lang = 'en-US';
             utterance.volume = 1.0;
-            utterance.rate = 0.9; // Slightly slower for clarity on iOS
+            utterance.rate = 0.9; // Slightly slower for clarity
             utterance.pitch = 1.0;
             // Function to select and play voice
             const trySpeak = () => {
                 try {
                     const voices = window.speechSynthesis.getVoices();
                     console.log('Available voices:', voices); // Debug: Log voices
-                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Siri'))
+                    // Prioritize natural American voices: Premium, Google, Samantha, or Siri
+                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Premium') || voice.name.includes('Google') || voice.name.includes('Samantha') || voice.name.includes('Siri')))
+                        || voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Natural'))
                         || voices.find(voice => voice.lang === 'en-US')
                         || voices.find(voice => voice.lang.startsWith('en'));
                     if (preferredVoice) {
@@ -216,7 +218,7 @@
                     window.speechSynthesis.speak(utterance);
                 } catch (error) {
                     console.error('SpeechSynthesis error:', error);
-                    alert('발음 재생에 실패했습니다. iPad의 음성 설정을 확인하거나 다른 브라우저를 시도해주세요.');
+                    alert('Failed to play pronunciation. Check your device voice settings or try another browser.');
                 }
             };
             // Check if voices are loaded
@@ -240,8 +242,8 @@
                     <span class="number">${index + 1}.</span>
                     <span class="word-text">${item.word} - ${item.meaning}</span>
                     <div>
-                        <button class="edit" onclick="editWord(${index})">수정</button>
-                        <button onclick="deleteWord(${index})">삭제</button>
+                        <button class="edit" onclick="editWord(${index})">Edit</button>
+                        <button onclick="deleteWord(${index})">Delete</button>
                         <button class="up" onclick="moveUp(${index})">↑</button>
                         <button class="down" onclick="moveDown(${index})">↓</button>
                     </div>
@@ -313,7 +315,7 @@
                 showCard();
                 updateWordList();
             } else {
-                alert('단어와 뜻을 모두 입력하세요.');
+                alert('Please enter both word and meaning.');
             }
         }
         function editWord(index) {
@@ -323,7 +325,7 @@
             wordInput.focus();
         }
         function deleteWord(index) {
-            if (confirm('이 단어를 삭제하시겠습니까?')) {
+            if (confirm('Are you sure you want to delete this word?')) {
                 words.splice(index, 1);
                 saveWords();
                 if (currentIndex >= words.length) {
