@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="mul">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>English Word Flashcards</title>
+    <title>Flashcards</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,7 +12,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: #ffffff; /* Pure white background */
             overflow-x: hidden;
         }
         .card-container {
@@ -39,9 +39,9 @@
             justify-content: center;
             align-items: center;
             font-size: 24px;
-            border: 2px solid #333;
+            border: 2px solid #f077f9; /* Your vibrant pink border */
             border-radius: 10px;
-            background-color: #fff;
+            background-color: #fdf3fe; /* Light tint of your pink for card bg */
         }
         .card-back {
             transform: rotateY(180deg);
@@ -61,7 +61,7 @@
             margin: 5px;
             font-size: 16px;
             width: 200px;
-            border: 1px solid #ccc;
+            border: 1px solid #f077f9; /* Your pink border */
             border-radius: 5px;
         }
         button {
@@ -69,19 +69,19 @@
             font-size: 16px;
             margin: 5px;
             cursor: pointer;
-            background-color: #007bff;
+            background-color: #f077f9; /* Your vibrant pink for buttons */
             color: white;
             border: none;
             border-radius: 5px;
         }
         button:hover {
-            background-color: #0056b3;
+            background-color: #d45de0; /* Darker shade of your pink for hover */
         }
         button.speak {
-            background-color: #17a2b8;
+            background-color: #f8a9fc; /* Lighter variant for speak */
         }
         button.speak:hover {
-            background-color: #117a8b;
+            background-color: #d45de0; /* Darker hover */
         }
         .word-list-container {
             margin: 20px;
@@ -94,26 +94,26 @@
             display: flex;
             justify-content: space-between;
             padding: 5px;
-            border-bottom: 1px solid #ddd;
+            border-bottom: 1px solid #f077f9; /* Your pink border */
             align-items: center;
-            background-color: #fff;
+            background-color: #fdf3fe; /* Light pink tint for items */
             margin: 2px 0;
             border-radius: 5px;
             cursor: pointer;
         }
         .word-item:hover {
-            background-color: #f8f9fa;
+            background-color: #f8a9fc; /* Mid-pink hover */
         }
         .word-item button {
-            background-color: #dc3545;
+            background-color: #ef5350; /* Reddish for delete */
             padding: 5px 10px;
             font-size: 14px;
         }
         .word-item button.edit {
-            background-color: #28a745;
+            background-color: #66bb6a; /* Green for edit */
         }
         .word-item button.up, .word-item button.down {
-            background-color: #ffc107;
+            background-color: #ffca28; /* Yellow for arrows */
             color: #333;
             padding: 5px 8px;
             font-size: 12px;
@@ -121,7 +121,7 @@
         .word-item .number {
             min-width: 30px;
             font-weight: bold;
-            color: #333;
+            color: #f077f9; /* Your pink for numbers */
         }
         .word-item .word-text {
             flex-grow: 1;
@@ -130,7 +130,6 @@
     </style>
 </head>
 <body>
-    <h2>English Word Flashcards</h2>
     <div class="card-container">
         <div class="card" id="card">
             <div class="card-front" id="word">Word</div>
@@ -138,9 +137,9 @@
         </div>
     </div>
     <div class="controls">
-        <button onclick="prevCard()">Previous Card</button>
+        <button onclick="prevCard()">Previous</button>
         <button class="speak" onclick="playWord()">Listen to Pronunciation</button>
-        <button onclick="nextCard()">Next Card</button>
+        <button onclick="nextCard()">Next</button>
     </div>
     <div class="form-container">
         <input type="text" id="wordInput" placeholder="English Word">
