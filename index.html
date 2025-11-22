@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>Flashcards</title>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -12,123 +13,69 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
-            background-color: #ffffff; /* Pure white background */
+            background-color: #ffffff;
             overflow-x: hidden;
         }
-        .card-container {
-            perspective: 1000px;
-            margin: 20px;
-        }
+        .card-container { perspective: 1000px; margin: 20px; }
         .card {
-            width: 300px;
-            height: 200px;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s;
-            cursor: pointer;
+            width: 300px; height: 200px; position: relative;
+            transform-style: preserve-3d; transition: transform 0.6s; cursor: pointer;
         }
-        .card.flipped {
-            transform: rotateY(180deg);
-        }
+        .card.flipped { transform: rotateY(180deg); }
         .card-front, .card-back {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            backface-visibility: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            border: 2px solid #f077f9; /* Your vibrant pink border */
-            border-radius: 10px;
-            background-color: #fdf3fe; /* Light tint of your pink for card bg */
+            width: 100%; height: 100%; position: absolute; backface-visibility: hidden;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; border: 2px solid #f077f9; border-radius: 10px;
+            background-color: #fdf3fe;
         }
-        .card-back {
-            transform: rotateY(180deg);
-        }
-        .controls {
-            margin: 10px;
-            text-align: center;
-        }
-        .form-container {
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
+        .card-back { transform: rotateY(180deg); }
+        .controls { margin: 15px; text-align: center; }
+        .form-container { margin: 20px; display: flex; flex-direction: column; align-items: center; }
         input {
-            padding: 8px;
-            margin: 5px;
-            font-size: 16px;
-            width: 200px;
-            border: 1px solid #f077f9; /* Your pink border */
-            border-radius: 5px;
+            padding: 8px; margin: 5px; font-size: 16px; width: 200px;
+            border: 1px solid #f077f9; border-radius: 5px;
         }
         button {
-            padding: 10px 20px;
-            font-size: 16px;
-            margin: 5px;
-            cursor: pointer;
-            background-color: #f077f9; /* Your vibrant pink for buttons */
-            color: white;
-            border: none;
-            border-radius: 5px;
+            padding: 10px 20px; font-size: 16px; margin: 5px; cursor: pointer;
+            background-color: #f077f9; color: white; border: none; border-radius: 5px;
         }
-        button:hover {
-            background-color: #d45de0; /* Darker shade of your pink for hover */
-        }
-        button.speak {
-            background-color: #f8a9fc; /* Lighter variant for speak */
-        }
-        button.speak:hover {
-            background-color: #d45de0; /* Darker hover */
-        }
-        .word-list-container {
-            margin: 20px;
-            width: 300px;
-        }
-        .word-list {
-            width: 100%;
-        }
-        .word-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px;
-            border-bottom: 1px solid #f077f9; /* Your pink border */
-            align-items: center;
-            background-color: #fdf3fe; /* Light pink tint for items */
-            margin: 2px 0;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        .word-item:hover {
-            background-color: #f8a9fc; /* Mid-pink hover */
-        }
-        .word-item button {
-            background-color: #ef5350; /* Reddish for delete */
-            padding: 5px 10px;
-            font-size: 14px;
-        }
-        .word-item button.edit {
-            background-color: #66bb6a; /* Green for edit */
-        }
-        .word-item button.up {
-            background-color: #800080; /* Purple for up */
-            color: white;
-        }
-        .word-item button.down {
-            background-color: #ff69b4; /* Hot pink for down */
-            color: white;
-        }
-        .word-item .number {
-            min-width: 30px;
+        button:hover { background-color: #d45de0; }
+        button.speak { background-color: #f8a9fc; }
+        button.speak:hover { background-color: #d45de0; }
+        button.mission {
+            background: linear-gradient(45deg, #9f0bf9, #f077f9);
+            padding: 18px 50px !important;
+            font-size: 24px !important;
             font-weight: bold;
-            color: #f077f9; /* Your pink for numbers */
+            margin-top: 10px;
         }
-        .word-item .word-text {
-            flex-grow: 1;
-            padding: 0 5px;
+        .word-list-container { margin: 20px; width: 300px; }
+        .word-item {
+            display: flex; justify-content: space-between; padding: 8px;
+            border-bottom: 1px solid #f077f9; background-color: #fdf3fe;
+            margin: 3px 0; border-radius: 5px; cursor: pointer;
         }
+        .word-item:hover { background-color: #f8a9fc; }
+        .word-item button { padding: 5px 10px; font-size: 14px; }
+        .word-item button.edit { background-color: #66bb6a; }
+        .word-item button.up { background-color: #800080; color: white; }
+        .word-item button.down { background-color: #ff69b4; color: white; }
+        .word-item .number { min-width: 30px; font-weight: bold; color: #f077f9; }
+        .word-item .word-text { flex-grow: 1; padding: 0 5px; }
+
+        @keyframes shake {
+            0%,100%{transform:translate(0,0) rotate(0deg)}
+            10%{transform:translate(-12px,-3px) rotate(-3deg)}
+            20%{transform:translate(24px,0) rotate(3deg)}
+            30%{transform:translate(-24px,6px) rotate(0)}
+             40%{transform:translate(12px,-9px) rotate(3deg)}
+            50%{transform:translate(-12px,12px) rotate(-3deg)}
+            60%{transform:translate(24px,-6px) rotate(0)}
+            70%{transform:translate(-12px,9px) rotate(-3deg)}
+            80%{transform:translate(12px,-3px) rotate(3deg)}
+            90%{transform:translate(-6px,3px) rotate(0)}
+        }
+        .shake { animation: shake 0.82s cubic-bezier(.36,.07,.64,1) both; }
     </style>
 </head>
 <body>
@@ -138,19 +85,34 @@
             <div class="card-back" id="meaning">Meaning</div>
         </div>
     </div>
+
     <div class="controls">
         <button onclick="prevCard()">Previous</button>
         <button class="speak" onclick="playWord()">Listen</button>
         <button onclick="nextCard()">Next</button>
+        <br>
+        <button class="mission" onclick="askMission()">Mission Completed?</button>
     </div>
+
     <div class="form-container">
         <input type="text" id="wordInput" placeholder="English Word">
         <input type="text" id="meaningInput" placeholder="Meaning">
         <button onclick="addOrUpdateWord()">Add/Update</button>
     </div>
+
     <div class="word-list-container">
         <div class="word-list" id="wordList"></div>
     </div>
+
+    <!-- Mission Modal -->
+    <div id="missionModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.88); justify-content:center; align-items:center; z-index:999; flex-direction:column;">
+        <div style="background:#fdf3fe; padding:70px 100px; border-radius:30px; border:8px solid #f077f9; text-align:center;">
+            <h2 style="margin:0 0 60px 0; color:#f077f9; font-size:52px;">Mission Completed?</h2>
+            <button onclick="yesMission()" style="background:#4caf50; color:white; font-size:40px; padding:28px 70px; margin:15px; border-radius:20px;">YES</button>
+            <button onclick="noMission()" style="background:#f44336; color:white; font-size:40px; padding:28px 70px; margin:15px; border-radius:20px;">NO</button>
+        </div>
+    </div>
+
     <script>
         let words = JSON.parse(localStorage.getItem('flashcards')) || [
             { word: "Apple", meaning: "A round fruit with red or green skin" },
@@ -164,15 +126,18 @@
         ];
         let currentIndex = 0;
         let editIndex = -1;
+
         const card = document.getElementById('card');
         const wordElement = document.getElementById('word');
         const meaningElement = document.getElementById('meaning');
         const wordInput = document.getElementById('wordInput');
         const meaningInput = document.getElementById('meaningInput');
         const wordList = document.getElementById('wordList');
+
         function saveWords() {
             localStorage.setItem('flashcards', JSON.stringify(words));
         }
+
         function showCard() {
             if (words.length === 0) {
                 wordElement.textContent = "No Words";
@@ -184,6 +149,7 @@
             wordElement.textContent = words[currentIndex].word;
             meaningElement.textContent = words[currentIndex].meaning;
         }
+
         function playWord() {
             if (words.length === 0 || wordElement.textContent === "No Words") {
                 alert('No word to pronounce.');
@@ -193,52 +159,40 @@
                 alert('This browser does not support speech synthesis.');
                 return;
             }
-            // Create utterance
             const utterance = new SpeechSynthesisUtterance(words[currentIndex].word);
             utterance.lang = 'en-US';
             utterance.volume = 1.0;
-            utterance.rate = 0.9; // Slightly slower for clarity
+            utterance.rate = 0.9;
             utterance.pitch = 1.0;
-            // Function to select and play voice
+
             const trySpeak = () => {
                 try {
                     const voices = window.speechSynthesis.getVoices();
-                    console.log('Available voices:', voices); // Debug: Log voices
-                    // Prioritize natural American voices: Premium, Google, Samantha, or Siri
-                    const preferredVoice = voices.find(voice => voice.lang === 'en-US' && (voice.name.includes('Premium') || voice.name.includes('Google') || voice.name.includes('Samantha') || voice.name.includes('Siri')))
-                        || voices.find(voice => voice.lang === 'en-US' && voice.name.includes('Natural'))
-                        || voices.find(voice => voice.lang === 'en-US')
-                        || voices.find(voice => voice.lang.startsWith('en'));
-                    if (preferredVoice) {
-                        utterance.voice = preferredVoice;
-                        console.log('Selected voice:', preferredVoice.name, preferredVoice.lang);
-                    } else {
-                        console.warn('No suitable English voice found; using default voice.');
-                    }
-                    window.speechSynthesis.cancel(); // Prevent overlap
+                    const preferredVoice = voices.find(v => v.lang === 'en-US' && (v.name.includes('Premium') || v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Siri')))
+                        || voices.find(v => v.lang === 'en-US' && v.name.includes('Natural'))
+                        || voices.find(v => v.lang === 'en-US')
+                        || voices.find(v => v.lang.startsWith('en'));
+
+                    if (preferredVoice) utterance.voice = preferredVoice;
+                    window.speechSynthesis.cancel();
                     window.speechSynthesis.speak(utterance);
-                } catch (error) {
-                    console.error('SpeechSynthesis error:', error);
-                    alert('Failed to play pronunciation. Check your device voice settings or try another browser.');
+                } catch (e) {
+                    alert('Failed to play pronunciation.');
                 }
             };
-            // Check if voices are loaded
+
             if (window.speechSynthesis.getVoices().length === 0) {
-                window.speechSynthesis.onvoiceschanged = () => {
-                    console.log('Voices loaded asynchronously');
-                    trySpeak();
-                    window.speechSynthesis.onvoiceschanged = null; // Clean up
-                };
+                window.speechSynthesis.onvoiceschanged = () => { trySpeak(); window.speechSynthesis.onvoiceschanged = null; };
             } else {
                 trySpeak();
             }
         }
+
         function updateWordList() {
             wordList.innerHTML = '';
             words.forEach((item, index) => {
                 const div = document.createElement('div');
                 div.className = 'word-item';
-                div.setAttribute('data-index', index);
                 div.innerHTML = `
                     <span class="number">${index + 1}.</span>
                     <span class="word-text">${item.word} - ${item.meaning}</span>
@@ -249,96 +203,113 @@
                         <button class="down" onclick="moveDown(${index})">Down</button>
                     </div>
                 `;
-                div.addEventListener('click', (e) => {
+                div.onclick = e => {
                     if (!e.target.closest('button')) {
                         currentIndex = index;
                         showCard();
                     }
-                });
+                };
                 wordList.appendChild(div);
             });
         }
-        function reorderWords(fromIndex, toIndex) {
-            const [movedItem] = words.splice(fromIndex, 1);
-            words.splice(toIndex, 0, movedItem);
-            if (currentIndex === fromIndex) {
-                currentIndex = toIndex;
-            } else if (fromIndex < currentIndex && currentIndex <= toIndex) {
-                currentIndex--;
-            } else if (toIndex <= currentIndex && currentIndex < fromIndex) {
-                currentIndex++;
-            }
+
+        function reorderWords(from, to) {
+            const [moved] = words.splice(from, 1);
+            words.splice(to, 0, moved);
+            if (currentIndex === from) currentIndex = to;
+            else if (from < currentIndex && currentIndex <= to) currentIndex--;
+            else if (to <= currentIndex && currentIndex < from) currentIndex++;
             saveWords();
             showCard();
             updateWordList();
         }
-        function moveUp(index) {
-            if (index > 0) {
-                reorderWords(index, index - 1);
-            }
-        }
-        function moveDown(index) {
-            if (index < words.length - 1) {
-                reorderWords(index, index + 1);
-            }
-        }
-        card.addEventListener('click', () => {
-            if (words.length > 0) {
-                card.classList.toggle('flipped');
-            }
-        });
-        function nextCard() {
-            if (words.length > 0) {
-                currentIndex = (currentIndex + 1) % words.length;
-                showCard();
-            }
-        }
-        function prevCard() {
-            if (words.length > 0) {
-                currentIndex = (currentIndex - 1 + words.length) % words.length;
-                showCard();
-            }
-        }
+
+        function moveUp(i) { if (i > 0) reorderWords(i, i-1); }
+        function moveDown(i) { if (i < words.length-1) reorderWords(i, i+1); }
+
+        card.onclick = () => { if (words.length > 0) card.classList.toggle('flipped'); };
+        function nextCard() { if (words.length > 0) currentIndex = (currentIndex + 1) % words.length; showCard(); }
+        function prevCard() { if (words.length > 0) currentIndex = (currentIndex - 1 + words.length) % words.length; showCard(); }
+
         function addOrUpdateWord() {
             const word = wordInput.value.trim();
             const meaning = meaningInput.value.trim();
-            if (word && meaning) {
-                if (editIndex === -1) {
-                    words.push({ word, meaning });
-                } else {
-                    words[editIndex] = { word, meaning };
-                    editIndex = -1;
-                }
-                saveWords();
-                wordInput.value = '';
-                meaningInput.value = '';
-                currentIndex = words.length - 1;
-                showCard();
-                updateWordList();
-            } else {
-                alert('Please enter both word and meaning.');
-            }
+            if (!word || !meaning) { alert('Please enter both word and meaning.'); return; }
+            if (editIndex === -1) words.push({word, meaning});
+            else { words[editIndex] = {word, meaning}; editIndex = -1; }
+            saveWords();
+            wordInput.value = meaningInput.value = '';
+            currentIndex = words.length - 1;
+            showCard();
+            updateWordList();
         }
-        function editWord(index) {
-            wordInput.value = words[index].word;
-            meaningInput.value = words[index].meaning;
-            editIndex = index;
+
+        function editWord(i) {
+            wordInput.value = words[i].word;
+            meaningInput.value = words[i].meaning;
+            editIndex = i;
             wordInput.focus();
         }
-        function deleteWord(index) {
-            if (confirm('Are you sure you want to delete this word?')) {
-                words.splice(index, 1);
+
+        function deleteWord(i) {
+            if (confirm('Delete this word?')) {
+                words.splice(i, 1);
                 saveWords();
-                if (currentIndex >= words.length) {
-                    currentIndex = words.length - 1;
-                }
-                if (currentIndex < 0) {
-                    currentIndex = 0;
-                }
+                if (currentIndex >= words.length && currentIndex > 0) currentIndex--;
                 showCard();
                 updateWordList();
             }
         }
+
+        // 새 기능들
+        function askMission() {
+            document.getElementById('missionModal').style.display = 'flex';
+        }
+
+        function yesMission() {
+            document.getElementById('missionModal').style.display = 'none';
+            const msg = document.createElement('div');
+            msg.innerHTML = 'CONGRATULATIONS!<br><span style="font-size:90px">🎉🚀🎉</span>';
+            msg.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:90px;color:#f077f9;font-weight:bold;z-index:1001;pointer-events:none;';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 4500);
+
+            const duration = 5e3;
+            const end = Date.now() + duration;
+            (function fire() {
+                confetti({particleCount: 20, spread: 100, origin: {y: 0.6, x: 0.15}});
+                confetti({particleCount: 20, spread: 100, origin: {y: 0.6, x: 0.85}});
+                if (Date.now() < end) requestAnimationFrame(fire);
+            })();
+        }
+
+        function noMission() {
+            document.getElementById('missionModal').style.display = 'none';
+            const msg = document.createElement('div');
+            msg.textContent = 'TRY IT NOW!';
+            msg.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:110px;color:#ff1744;font-weight:900;z-index:1001;pointer-events:none;animation: pulse 0.5s infinite alternate;';
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 2800);
+
+            const fist = document.createElement('div');
+            fist.textContent = '👊';
+            fist.style.cssText = 'position:fixed;left:-120px;top:50%;font-size:120px;transform:translateY(-50%);z-index:1002;pointer-events:none;';
+            document.body.appendChild(fist);
+
+            requestAnimationFrame(() => {
+                fist.style.transition = 'all 0.75s cubic-bezier(0.2, 0.8, 0.2, 1)';
+                fist.style.left = 'calc(50vw + 120px)';
+                fist.style.transform = 'translateY(-50%) scale(5) rotate(45deg)';
+            });
+
+            setTimeout(() => document.body.classList.add('shake'), 650);
+            setTimeout(() => {
+                fist.remove();
+                document.body.classList.remove('shake');
+            }, 1500);
+        }
+
+        // 초기화
         showCard();
         updateWordList();
     </script>
