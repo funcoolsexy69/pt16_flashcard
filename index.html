@@ -63,19 +63,28 @@
         .word-item .number { min-width: 30px; font-weight: bold; color: #f077f9; }
         .word-item .word-text { flex-grow: 1; padding: 0 5px; }
 
-        @keyframes shake {
-            0%,100%{transform:translate(0,0) rotate(0deg)}
-            10%{transform:translate(-12px,-3px) rotate(-3deg)}
-            20%{transform:translate(24px,0) rotate(3deg)}
-            30%{transform:translate(-24px,6px) rotate(0)}
-             40%{transform:translate(12px,-9px) rotate(3deg)}
-            50%{transform:translate(-12px,12px) rotate(-3deg)}
-            60%{transform:translate(24px,-6px) rotate(0)}
-            70%{transform:translate(-12px,9px) rotate(-3deg)}
-            80%{transform:translate(12px,-3px) rotate(3deg)}
-            90%{transform:translate(-6px,3px) rotate(0)}
+        @keyframes celebrationShake {
+            0%,100% { transform: translate(0,0) rotate(0deg); }
+            10% { transform: translate(-15px, -10px) rotate(-5deg); }
+            20% { transform: translate(20px, -5px) rotate(5deg); }
+            30% { transform: translate(-20px, 10px) rotate(-3deg); }
+            40% { transform: translate(15px, -15px) rotate(4deg); }
+            50% { transform: translate(-10px, 15px) rotate(-5deg); }
+            60% { transform: translate(25px, -10px) rotate(5deg); }
+            70% { transform: translate(-15px, 10px) rotate(-4deg); }
+            80% { transform: translate(10px, -20px) rotate(5deg); }
+            90% { transform: translate(-10px, 5px) rotate(-3deg); }
         }
-        .shake { animation: shake 0.82s cubic-bezier(.36,.07,.64,1) both; }
+        .celebrate { animation: celebrationShake 0.7s ease-in-out 5; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+        @keyframes glow {
+            0% { text-shadow: 0 0 20px #fff, 0 0 40px #f077f9; }
+            100% { text-shadow: 0 0 40px #fff, 0 0 80px #ff00ff; }
+        }
     </style>
 </head>
 <body>
@@ -261,26 +270,46 @@
             }
         }
 
-        // 새 기능들
         function askMission() {
             document.getElementById('missionModal').style.display = 'flex';
         }
 
         function yesMission() {
             document.getElementById('missionModal').style.display = 'none';
-            const msg = document.createElement('div');
-            msg.innerHTML = 'CONGRATULATIONS!<br><span style="font-size:90px">🎉🚀🎉</span>';
-            msg.style.cssText = 'position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);font-size:90px;color:#f077f9;font-weight:bold;z-index:1001;pointer-events:none;';
-            document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 4500);
+            document.body.classList.add('celebrate');
 
-            const duration = 5e3;
-            const end = Date.now() + duration;
-            (function fire() {
-                confetti({particleCount: 20, spread: 100, origin: {y: 0.6, x: 0.15}});
-                confetti({particleCount: 20, spread: 100, origin: {y: 0.6, x: 0.85}});
-                if (Date.now() < end) requestAnimationFrame(fire);
-            })();
+            const msg = document.createElement('div');
+            msg.innerHTML = 'MISSION CRUSHED!<br>YOU ARE A GOD!<br><span style="font-size:140px;">🎉🚀🔥💥⭐</span>';
+            msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);font-size:110px;color:#ff1744;font-weight:900;z-index:1001;pointer-events:none;text-shadow:0 0 40px #fff,0 0 80px #f077f9;animation:pulse 0.6s infinite alternate, glow 2s infinite;';
+            document.body.appendChild(msg);
+
+            const duration = 10 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 45, spread: 360, ticks: 100, zIndex: 1002, shapes: ['star', 'circle'], colors: ['#ff0000', '#ff6900', '#ffb800', '#00ff00', '#00ffff', '#ff00ff', '#ffffff'] };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+
+                const particleCount = 100 * (timeLeft / duration);
+
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.4), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.6, 0.9), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount: 40, spread: 120, startVelocity: 60, gravity: 0.6, origin: { x: 0.5, y: 0.1 } }));
+            }, 200);
+
+            const audio = new Audio('https://cdn.pixabay.com/download/audio/2023/01/22/audio_9e614d5a63.mp3?filename=epic-orchestral-fanfare-14559.mp3');
+            audio.volume = 0.7;
+            audio.play().catch(()=>{});
+
+            setTimeout(() => {
+                msg.remove();
+                document.body.classList.remove('celebrate');
+            }, 10000);
         }
 
         function noMission() {
@@ -302,14 +331,13 @@
                 fist.style.transform = 'translateY(-50%) scale(5) rotate(45deg)';
             });
 
-            setTimeout(() => document.body.classList.add('shake'), 650);
+            setTimeout(() => document.body.classList.add('celebrate'), 650);  // shake 재활용
             setTimeout(() => {
                 fist.remove();
-                document.body.classList.remove('shake');
+                document.body.classList.remove('celebrate');
             }, 1500);
         }
 
-        // 초기화
         showCard();
         updateWordList();
     </script>
